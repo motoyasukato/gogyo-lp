@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五行期数推命 — 性格診断で終わらせない。</title>
+<meta name="description" content="MBTIは性格がわかる。五行期数推命は「いつ動くか」までわかる。生年月日から導く、あなた固有の五行と運気の周期。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --dark: #0a0a14;
+  --dark-mid: #12121f;
+  --dark-surface: #1a1a2e;
+  --accent: #c9a84c;
+  --accent-glow: #e8c555;
+  --accent-dim: rgba(201,168,76,0.15);
+  --light: #f5f3ee;
+  --light-mid: #eae6dd;
+  --text-dark: #e8e4d8;
+  --text-light: #1a1a2e;
+  --text-muted: #8a8a9a;
+  --serif: 'Shippori Mincho', serif;
+  --sans: 'Zen Kaku Gothic New', sans-serif;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  color: var(--text-dark);
+  background: var(--dark);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== LOADING SCREEN ===== */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+.loading-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.loading-ring {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  animation: loadSpin 8s linear infinite;
+}
+@keyframes loadSpin { to { transform: rotate(360deg); } }
+.loading-element {
+  position: absolute;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 800;
+  animation: loadPulse 2s ease-in-out infinite;
+}
+.loading-element:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%); color: #4a9e4a; animation-delay: 0s; }
+.loading-element:nth-child(2) { top: 50%; right: 0; transform: translateY(-50%); color: #d44; animation-delay: 0.4s; }
+.loading-element:nth-child(3) { bottom: 0; left: 50%; transform: translateX(-50%); color: #c9a84c; animation-delay: 0.8s; }
+.loading-element:nth-child(4) { top: 50%; left: 0; transform: translateY(-50%); color: #ccc; animation-delay: 1.2s; }
+.loading-element:nth-child(5) { top: 50%; left: 50%; transform: translate(-50%,-50%); color: #4488cc; animation-delay: 1.6s; }
+@keyframes loadPulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.8); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+.loading-element:nth-child(1) { animation: loadPulse1 2s ease-in-out infinite; }
+@keyframes loadPulse1 {
+  0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(0.8); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+}
+.loading-element:nth-child(2) { animation: loadPulse2 2s ease-in-out infinite 0.4s; }
+@keyframes loadPulse2 {
+  0%, 100% { opacity: 0.3; transform: translateY(-50%) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+}
+.loading-element:nth-child(4) { animation: loadPulse2 2s ease-in-out infinite 1.2s; }
+.loading-text {
+  margin-top: 32px;
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 6px;
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-glow));
+  z-index: 1000;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px rgba(201,168,76,0.5);
+}
+
+/* ===== UTILITY ===== */
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* ===== NOISE TEXTURE ===== */
+.noise-bg {
+  position: relative;
+}
+.noise-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(201,168,76,0.2); }
+  50% { box-shadow: 0 0 40px rgba(201,168,76,0.4), 0 0 80px rgba(201,168,76,0.1); }
+}
+@keyframes rotate-ring {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes rotate-ring-reverse {
+  from { transform: translate(-50%, -50%) rotate(360deg); }
+  to { transform: translate(-50%, -50%) rotate(0deg); }
+}
+@keyframes dash-flow {
+  to { stroke-dashoffset: -60; }
+}
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.15; }
+  50% { transform: translateY(-20px) scale(1.1); opacity: 0.3; }
+}
+@keyframes text-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(201,168,76,0.3); }
+  50% { text-shadow: 0 0 40px rgba(201,168,76,0.6), 0 0 80px rgba(201,168,76,0.2); }
+}
+@keyframes step-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(201,168,76,0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* Unsplash star background — replace with custom image if desired */
+  background:
+    linear-gradient(180deg, rgba(10,10,20,0.5) 0%, rgba(10,10,20,0.85) 60%, var(--dark) 100%),
+    url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1920&q=80') center/cover no-repeat;
+  overflow: hidden;
+}
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+/* Five-element rotating ring */
+.hero-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 480px; height: 480px;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+  animation: rotate-ring 40s linear infinite;
+}
+.hero-ring-inner {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 560px; height: 560px;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+  animation: rotate-ring-reverse 60s linear infinite;
+}
+.ring-el {
+  position: absolute;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 800;
+  opacity: 0.12;
+  text-shadow: 0 0 20px currentColor;
+}
+.ring-el:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%); color: #4a9e4a; }
+.ring-el:nth-child(2) { top: 50%; right: 0; transform: translateY(-50%); color: #d44; }
+.ring-el:nth-child(3) { bottom: 0; left: 50%; transform: translateX(-50%); color: #c9a84c; }
+.ring-el:nth-child(4) { top: 50%; left: 0; transform: translateY(-50%); color: #ccc; }
+.ring-el:nth-child(5) { top: 20%; right: 10%; color: #4488cc; }
+.ring-inner-el {
+  position: absolute;
+  font-size: 14px;
+  opacity: 0.06;
+  font-family: var(--serif);
+  color: var(--accent);
+}
+.ring-inner-el:nth-child(1) { top: 5%; left: 30%; }
+.ring-inner-el:nth-child(2) { top: 15%; right: 15%; }
+.ring-inner-el:nth-child(3) { bottom: 20%; right: 25%; }
+.ring-inner-el:nth-child(4) { bottom: 10%; left: 20%; }
+.ring-inner-el:nth-child(5) { top: 40%; left: 5%; }
+.ring-inner-el:nth-child(6) { top: 60%; right: 5%; }
+
+/* Decorative SVG rings */
+.hero-deco-svg {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 200px;
+  background: linear-gradient(to bottom, transparent, var(--dark));
+  pointer-events: none;
+  z-index: 3;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 4;
+  padding: 60px 24px;
+}
+
+.hero-label {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 8px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  font-weight: 700;
+  opacity: 0;
+  animation: fadeUp 1s ease 0.3s forwards;
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(32px, 7vw, 60px);
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--text-dark);
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeUp 1s ease 0.5s forwards;
+  text-shadow: 0 0 60px rgba(201,168,76,0.15);
+}
+.hero-title em {
+  font-style: normal;
+  background: linear-gradient(90deg, var(--accent), var(--accent-glow), #fff, var(--accent-glow), var(--accent));
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 5s linear infinite, text-glow 4s ease-in-out infinite;
+}
+
+.hero-sub {
+  font-size: clamp(14px, 2.5vw, 17px);
+  line-height: 2.2;
+  color: var(--text-muted);
+  max-width: 560px;
+  margin: 0 auto 52px;
+  font-weight: 400;
+  opacity: 0;
+  animation: fadeUp 1s ease 0.7s forwards;
+}
+
+.cta-btn {
+  display: inline-block;
+  padding: 20px 64px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--dark);
+  background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+.cta-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 48px rgba(201,168,76,0.4), 0 0 80px rgba(201,168,76,0.15);
+  letter-spacing: 4px;
+}
+.cta-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s linear infinite;
+}
+
+.hero-note {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.hero-cta-wrap {
+  opacity: 0;
+  animation: fadeUp 1s ease 0.9s forwards;
+}
+
+/* Scroll indicator */
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeIn 1s ease 1.5s forwards;
+}
+.scroll-hint span {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+.scroll-arrow {
+  width: 1px;
+  height: 30px;
+  background: linear-gradient(to bottom, var(--accent), transparent);
+  animation: float 2s ease-in-out infinite;
+}
+
+/* ===== SEPARATOR ===== */
+.sep {
+  text-align: center;
+  padding: 60px 0;
+}
+.sep-line {
+  width: 1px;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  margin: 0 auto;
+}
+
+/* ===== SECTION COMMON ===== */
+.section-label {
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(24px, 4.5vw, 36px);
+  font-weight: 800;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.section-desc {
+  font-size: 14px;
+  line-height: 2.2;
+  color: var(--text-muted);
+  max-width: 640px;
+  margin-bottom: 48px;
+}
+
+/* ===== COMPARISON SECTION (DARK) ===== */
+.comparison {
+  background: var(--dark);
+  padding: 100px 0 80px;
+  position: relative;
+}
+
+.comp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.comp-header {
+  padding: 18px 24px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.comp-header.mbti {
+  background: rgba(255,255,255,0.02);
+  color: var(--text-muted);
+  backdrop-filter: blur(10px);
+}
+.comp-header.gogyo {
+  background: rgba(201,168,76,0.08);
+  color: var(--accent);
+  backdrop-filter: blur(10px);
+}
+
+.comp-row { display: contents; }
+.comp-cell {
+  padding: 22px 24px;
+  font-size: 13px;
+  line-height: 1.9;
+  transition: all 0.3s ease;
+}
+.comp-cell.mbti {
+  background: rgba(255,255,255,0.02);
+  color: var(--text-muted);
+  backdrop-filter: blur(10px);
+}
+.comp-cell.mbti:hover {
+  background: rgba(255,255,255,0.04);
+}
+.comp-cell.gogyo {
+  background: rgba(201,168,76,0.05);
+  color: var(--text-dark);
+  font-weight: 500;
+  border-left: 2px solid rgba(201,168,76,0.3);
+  backdrop-filter: blur(10px);
+}
+.comp-cell.gogyo:hover {
+  background: rgba(201,168,76,0.1);
+  border-left-color: var(--accent);
+  box-shadow: inset 0 0 30px rgba(201,168,76,0.05);
+}
+.comp-cell .cell-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(201,168,76,0.5);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.comp-message {
+  margin-top: 56px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: clamp(17px, 3vw, 24px);
+  line-height: 1.9;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+.comp-message em {
+  font-style: normal;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(201,168,76,0.3);
+}
+
+/* ===== PLAN SHOWCASE SECTION ===== */
+.plan-showcase {
+  background: var(--dark);
+  padding: 100px 0 120px;
+  position: relative;
+  overflow: hidden;
+}
+.plan-showcase::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 50%, rgba(201,168,76,0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.plan-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.plan-card {
+  border-radius: 16px;
+  padding: 36px 28px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.4s ease;
+}
+.plan-card:hover { transform: translateY(-4px); }
+
+.plan-card.free {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.plan-card.premium {
+  background: rgba(201,168,76,0.06);
+  border: 1px solid rgba(201,168,76,0.25);
+  box-shadow: 0 0 60px rgba(201,168,76,0.08);
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+.plan-card.premium::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.4), transparent 50%, rgba(201,168,76,0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.plan-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.plan-badge.free-badge {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-muted);
+}
+.plan-badge.premium-badge {
+  background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+  color: var(--dark);
+}
+
+.plan-card-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 24px;
+}
+.plan-card.free .plan-card-title { color: var(--text-muted); }
+.plan-card.premium .plan-card-title { color: var(--accent); }
+
+/* Mock UI elements */
+.mock-type-card {
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.mock-type-name {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+.mock-type-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.mock-tags {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.mock-tag {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  background: rgba(201,168,76,0.12);
+  color: var(--accent);
+}
+.mock-rarity {
+  margin-top: 12px;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.mock-rarity-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.mock-list {
+  list-style: none;
+  padding: 0;
+}
+.mock-list li {
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mock-list li::before {
+  content: '✓';
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.plan-card.premium .mock-list li {
+  color: var(--text-dark);
+}
+
+/* Premium mock visuals */
+.mock-timeline {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.mock-timeline-item {
+  flex: 1;
+  text-align: center;
+  padding: 10px 4px;
+  background: rgba(255,255,255,0.04);
+  font-size: 9px;
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+.mock-timeline-item.active {
+  background: rgba(201,168,76,0.15);
+  color: var(--accent);
+}
+.mock-timeline-item .tl-age {
+  font-size: 8px;
+  opacity: 0.6;
+  display: block;
+  margin-bottom: 2px;
+}
+.mock-timeline-item .tl-kanji {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 800;
+  display: block;
+}
+
+.mock-month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.mock-month {
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  font-size: 9px;
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+.mock-month.highlight {
+  background: rgba(201,168,76,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(201,168,76,0.2);
+}
+.mock-month .m-num { display: block; font-weight: 700; margin-bottom: 2px; }
+.mock-month .m-kanji { font-family: var(--serif); font-size: 12px; font-weight: 800; display: block; }
+
+.mock-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.mock-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mock-bar-label {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 800;
+  width: 20px;
+  text-align: center;
+}
+.mock-bar {
+  flex: 1;
+  height: 20px;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+}
+.mock-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--dark);
+  transition: width 1s ease;
+}
+
+.plan-cta-area {
+  text-align: center;
+  margin-top: 48px;
+  position: relative;
+  z-index: 1;
+}
+.plan-cta-text {
+  font-family: var(--serif);
+  font-size: clamp(16px, 3vw, 20px);
+  color: var(--text-dark);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.plan-cta-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+/* ===== METHODOLOGY SECTION (LIGHT) ===== */
+.methodology {
+  background: var(--light);
+  color: var(--text-light);
+  padding: 120px 0 100px;
+  position: relative;
+  /* Washi texture overlay */
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a84c' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.methodology::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 160px;
+  background: linear-gradient(to bottom, var(--dark), var(--light));
+  pointer-events: none;
+}
+
+.method-label {
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.method-title {
+  font-family: var(--serif);
+  font-size: clamp(24px, 4.5vw, 36px);
+  font-weight: 800;
+  color: var(--text-light);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.method-desc {
+  font-size: 14px;
+  line-height: 2.2;
+  color: #666;
+  max-width: 640px;
+  margin-bottom: 56px;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 48px;
+}
+.steps::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--accent), rgba(201,168,76,0.1));
+}
+
+.step {
+  position: relative;
+  padding: 0 0 48px 28px;
+}
+.step:last-child { padding-bottom: 0; }
+
+.step-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+  border: 1px solid rgba(201,168,76,0.1);
+  transition: all 0.4s ease;
+}
+.step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(201,168,76,0.2);
+}
+
+.step-num {
+  position: absolute;
+  left: -48px;
+  top: 28px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+  animation: step-pulse 3s ease-in-out infinite;
+}
+.step:nth-child(2) .step-num { animation-delay: 1s; }
+.step:nth-child(3) .step-num { animation-delay: 2s; }
+
+.step-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+.step-body {
+  font-size: 14px;
+  line-height: 2;
+  color: #555;
+}
+
+/* ===== CTA BAND (DARK) ===== */
+.cta-band {
+  background: var(--dark-surface);
+  padding: 100px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-band::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+/* Floating orbs */
+.cta-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.15), transparent 70%);
+  pointer-events: none;
+  animation: orb-float 6s ease-in-out infinite;
+}
+
+.cta-band-title {
+  font-family: var(--serif);
+  font-size: clamp(22px, 4.5vw, 34px);
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  position: relative;
+}
+.cta-band-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 40px;
+  position: relative;
+}
+
+/* ===== FAQ SECTION (LIGHT) ===== */
+.faq {
+  background: var(--light);
+  color: var(--text-light);
+  padding: 120px 0 100px;
+  position: relative;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a84c' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.faq::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 160px;
+  background: linear-gradient(to bottom, var(--dark-surface), var(--light));
+  pointer-events: none;
+}
+
+.faq-label {
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.faq-title {
+  font-family: var(--serif);
+  font-size: clamp(24px, 4.5vw, 36px);
+  font-weight: 800;
+  color: var(--text-light);
+  margin-bottom: 48px;
+}
+
+.faq-item {
+  border-bottom: 1px solid #d8d4cc;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  border-radius: 4px;
+}
+.faq-item:hover {
+  background: rgba(201,168,76,0.04);
+}
+.faq-q {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 16px;
+}
+.faq-q::before {
+  content: 'Q.';
+  color: var(--accent);
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.faq-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--accent);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.faq-item.open .faq-toggle {
+  transform: rotate(45deg);
+  background: var(--accent);
+  color: var(--dark);
+}
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), padding 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  font-size: 14px;
+  line-height: 2.2;
+  color: #666;
+  padding: 0 16px 0 44px;
+}
+.faq-item.open .faq-a {
+  max-height: 300px;
+  padding: 0 16px 24px 44px;
+}
+
+/* ===== FINAL CTA ===== */
+.final-cta {
+  background: var(--dark);
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(201,168,76,0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(201,168,76,0.04) 0%, transparent 40%);
+  pointer-events: none;
+}
+.final-cta-title {
+  font-family: var(--serif);
+  font-size: clamp(24px, 5vw, 40px);
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--text-dark);
+  margin-bottom: 16px;
+  position: relative;
+  animation: text-glow 5s ease-in-out infinite;
+}
+.final-cta-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 48px;
+  position: relative;
+}
+/* Decorative kanji floating */
+.floating-kanji {
+  position: absolute;
+  font-family: var(--serif);
+  font-weight: 800;
+  opacity: 0.04;
+  pointer-events: none;
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  background: var(--dark);
+  padding: 48px 0;
+  text-align: center;
+  border-top: 1px solid rgba(201,168,76,0.08);
+}
+.footer-logo {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 6px;
+  margin-bottom: 16px;
+}
+.footer-links {
+  margin-bottom: 16px;
+}
+.footer-links a {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-decoration: none;
+  opacity: 0.5;
+  margin: 0 12px;
+  transition: opacity 0.3s;
+}
+.footer-links a:hover { opacity: 0.8; }
+.footer-copy {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.3;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .plan-columns {
+    grid-template-columns: 1fr;
+  }
+  .hero-ring, .hero-ring-inner { display: none; }
+  .hero-deco-svg { display: none; }
+  .floating-kanji { display: none; }
+}
+@media (max-width: 640px) {
+  .comp-grid {
+    grid-template-columns: 1fr;
+  }
+  .comp-header.mbti { display: none; }
+  .comp-cell.mbti { display: none; }
+  .comp-header.gogyo { text-align: center; }
+  .hero-content { padding: 40px 20px; }
+  .cta-btn { padding: 18px 48px; font-size: 14px; }
+  .mock-month-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOADING SCREEN ===== -->
+<div class="loading-screen" id="loading">
+  <div class="loading-ring">
+    <div class="loading-element">木</div>
+    <div class="loading-element">火</div>
+    <div class="loading-element">土</div>
+    <div class="loading-element">金</div>
+    <div class="loading-element">水</div>
+  </div>
+  <p class="loading-text">五行期数推命</p>
+</div>
+
+<!-- ===== PROGRESS BAR ===== -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- ===== HERO ===== -->
+<section class="hero noise-bg">
+  <!-- Canvas for particle animation -->
+  <canvas class="hero-canvas" id="heroCanvas"></canvas>
+
+  <!-- Five-element rotating ring -->
+  <div class="hero-ring">
+    <div class="ring-el">木</div>
+    <div class="ring-el">火</div>
+    <div class="ring-el">土</div>
+    <div class="ring-el">金</div>
+    <div class="ring-el">水</div>
+  </div>
+  <div class="hero-ring-inner">
+    <div class="ring-inner-el">甲</div>
+    <div class="ring-inner-el">丙</div>
+    <div class="ring-inner-el">戊</div>
+    <div class="ring-inner-el">庚</div>
+    <div class="ring-inner-el">壬</div>
+    <div class="ring-inner-el">乙</div>
+  </div>
+
+  <!-- Decorative SVG ring -->
+  <svg class="hero-deco-svg" width="600" height="600" viewBox="0 0 600 600">
+    <circle cx="300" cy="300" r="220" fill="none" stroke="rgba(201,168,76,0.06)" stroke-width="0.5" stroke-dasharray="8 8">
+      <animateTransform attributeName="transform" type="rotate" from="0 300 300" to="360 300 300" dur="60s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300" cy="300" r="260" fill="none" stroke="rgba(201,168,76,0.04)" stroke-width="0.5" stroke-dasharray="4 12">
+      <animateTransform attributeName="transform" type="rotate" from="360 300 300" to="0 300 300" dur="80s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+
+  <div class="hero-content">
+    <p class="hero-label">五 行 期 数 推 命</p>
+    <h1 class="hero-title">
+      性格診断で、<br><em>終わらせない。</em>
+    </h1>
+    <p class="hero-sub">
+      MBTIは「何者か」を教える。<br>
+      五行期数推命は「いつ動くか」まで教える。<br>
+      生年月日から導く、あなた固有の五行と運気の周期。
+    </p>
+    <div class="hero-cta-wrap">
+      <a href="https://stunning-cocada-1d0598.netlify.app/" class="cta-btn">
+        無料で鑑定する
+      </a>
+      <p class="hero-note">生年月日を入力するだけ・会員登録不要・約30秒</p>
+      <p class="hero-note" style="margin-top:8px;">基本鑑定は無料。詳細鑑定（大運・年運・月運・日運）は有料オプションでご覧いただけます。</p>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ===== COMPARISON ===== -->
+<section class="comparison noise-bg">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">Why this is different</p>
+      <h2 class="section-title">MBTIが教えてくれないこと</h2>
+      <p class="section-desc">
+        MBTIは「あなたがどんな人か」を教えてくれる優れたツールです。<br>
+        でも、「いつ転職すべきか」「いつが飛躍期か」は教えてくれません。<br>
+        五行期数推命は、その答えを年・月・日の単位で出します。
+      </p>
+    </div>
+
+    <div class="comp-grid reveal">
+      <div class="comp-header mbti">MBTI</div>
+      <div class="comp-header gogyo">五行期数推命</div>
+
+      <div class="comp-row">
+        <div class="comp-cell mbti">
+          <span class="cell-label">分析対象</span>
+          性格タイプ（今の自分）
+        </div>
+        <div class="comp-cell gogyo">
+          <span class="cell-label">分析対象</span>
+          運気の周期（時間軸を含む）
+        </div>
+      </div>
+
+      <div class="comp-row">
+        <div class="comp-cell mbti">
+          <span class="cell-label">結果の形</span>
+          アルファベット4文字のタイプ名
+        </div>
+        <div class="comp-cell gogyo">
+          <span class="cell-label">結果の形</span>
+          タイプ名＋レア度＋五行数値
+        </div>
+      </div>
+
+      <div class="comp-row">
+        <div class="comp-cell mbti">
+          <span class="cell-label">時間軸</span>
+          なし（結果は固定）
+        </div>
+        <div class="comp-cell gogyo">
+          <span class="cell-label">時間軸</span>
+          大運・年運・月運・日運まで変化
+        </div>
+      </div>
+
+      <div class="comp-row">
+        <div class="comp-cell mbti">
+          <span class="cell-label">理論基盤</span>
+          西洋心理学（ユング理論）
+        </div>
+        <div class="comp-cell gogyo">
+          <span class="cell-label">理論基盤</span>
+          東洋五行思想＋独自数値化計算
+        </div>
+      </div>
+
+      <div class="comp-row">
+        <div class="comp-cell mbti">
+          <span class="cell-label">行動指針</span>
+          性格に合った選択のヒント
+        </div>
+        <div class="comp-cell gogyo">
+          <span class="cell-label">行動指針</span>
+          いつ・何をすべきかの具体的指針
+        </div>
+      </div>
+    </div>
+
+    <p class="comp-message reveal">
+      MBTIで<em>何者か</em>わかった。<br>
+      五行期数推命で、<em>いつ動くか</em>がわかった。
+    </p>
+  </div>
+</section>
+
+<!-- ===== SEPARATOR ===== -->
+<div class="sep" style="background:var(--dark);">
+  <div class="sep-line"></div>
+</div>
+
+<!-- ===== CTA BAND ===== -->
+<section class="cta-band">
+  <div class="cta-orb" style="width:200px;height:200px;top:-50px;left:-50px;animation-delay:0s;"></div>
+  <div class="cta-orb" style="width:150px;height:150px;bottom:-30px;right:-30px;animation-delay:3s;"></div>
+  <div class="container" style="position:relative;">
+    <p class="cta-band-title reveal">
+      あなたの命式タイプを、<br>まず無料で知る
+    </p>
+    <p class="cta-band-sub reveal">
+      生年月日を入力するだけ。約30秒で鑑定完了。
+    </p>
+    <a href="https://stunning-cocada-1d0598.netlify.app/" class="cta-btn reveal">
+      無料で鑑定する
+    </a>
+    <p class="hero-note reveal" style="margin-top:20px;">※ 詳細鑑定は有料オプションです</p>
+  </div>
+</section>
+
+<!-- ===== PLAN SHOWCASE ===== -->
+<section class="plan-showcase noise-bg">
+  <div class="container">
+    <div class="reveal" style="text-align:center; margin-bottom:64px;">
+      <p class="section-label">What you'll discover</p>
+      <h2 class="section-title">鑑定でわかること</h2>
+      <p class="section-desc" style="margin:16px auto 0; text-align:center;">
+        無料鑑定であなたのタイプと性格を知り、<br>
+        有料プランで「いつ動くか」の全貌を手に入れる。
+      </p>
+    </div>
+
+    <div class="plan-columns">
+      <!-- FREE PLAN -->
+      <div class="plan-card free reveal">
+        <span class="plan-badge free-badge">FREE</span>
+        <h3 class="plan-card-title">基本鑑定</h3>
+
+        <div class="mock-type-card">
+          <div class="mock-type-name">蒼 龍</div>
+          <div class="mock-type-sub">蒼龍型 — 天を衝く志の持ち主</div>
+          <div class="mock-tags">
+            <span class="mock-tag">リーダー気質</span>
+            <span class="mock-tag">正義感が強い</span>
+            <span class="mock-tag">不器用な優しさ</span>
+          </div>
+          <div class="mock-rarity">SS</div>
+          <div class="mock-rarity-label">レア度 85% — 極めて珍しい</div>
+        </div>
+
+        <ul class="mock-list">
+          <li>あなたの五行タイプ名</li>
+          <li>四柱表（天干・地支）</li>
+          <li>レア度（SS〜D）</li>
+          <li>性格タグ</li>
+          <li>思考パターン</li>
+          <li>強みと課題</li>
+          <li>他タイプとの相性</li>
+        </ul>
+      </div>
+
+      <!-- PREMIUM PLAN -->
+      <div class="plan-card premium reveal">
+        <span class="plan-badge premium-badge">PREMIUM</span>
+        <h3 class="plan-card-title">詳細鑑定</h3>
+
+        <!-- Mock: 大運タイムライン -->
+        <p style="font-size:11px; color:var(--accent); letter-spacing:2px; margin-bottom:8px; font-weight:700;">▶ 大運（10年周期）</p>
+        <div class="mock-timeline">
+          <div class="mock-timeline-item">
+            <span class="tl-age">9〜18歳</span>
+            <span class="tl-kanji">壬申</span>
+          </div>
+          <div class="mock-timeline-item">
+            <span class="tl-age">19〜28歳</span>
+            <span class="tl-kanji">癸酉</span>
+          </div>
+          <div class="mock-timeline-item">
+            <span class="tl-age">29〜38歳</span>
+            <span class="tl-kanji">甲戌</span>
+          </div>
+          <div class="mock-timeline-item active">
+            <span class="tl-age">39〜48歳</span>
+            <span class="tl-kanji" style="color:var(--accent);">乙亥</span>
+          </div>
+          <div class="mock-timeline-item">
+            <span class="tl-age">49〜58歳</span>
+            <span class="tl-kanji">丙子</span>
+          </div>
+        </div>
+
+        <!-- Mock: 月運グリッド -->
+        <p style="font-size:11px; color:var(--accent); letter-spacing:2px; margin-bottom:8px; font-weight:700;">▶ 月運</p>
+        <div class="mock-month-grid">
+          <div class="mock-month"><span class="m-num">2月</span><span class="m-kanji">庚寅</span></div>
+          <div class="mock-month highlight"><span class="m-num">3月</span><span class="m-kanji">辛卯</span></div>
+          <div class="mock-month"><span class="m-num">4月</span><span class="m-kanji">壬辰</span></div>
+          <div class="mock-month"><span class="m-num">5月</span><span class="m-kanji">癸巳</span></div>
+          <div class="mock-month"><span class="m-num">6月</span><span class="m-kanji">甲午</span></div>
+          <div class="mock-month"><span class="m-num">7月</span><span class="m-kanji">乙未</span></div>
+          <div class="mock-month"><span class="m-num">8月</span><span class="m-kanji">丙申</span></div>
+          <div class="mock-month"><span class="m-num">9月</span><span class="m-kanji">丁酉</span></div>
+        </div>
+
+        <!-- Mock: 五行バランス -->
+        <p style="font-size:11px; color:var(--accent); letter-spacing:2px; margin-bottom:8px; font-weight:700;">▶ 五行バランス</p>
+        <div class="mock-bars">
+          <div class="mock-bar-row">
+            <span class="mock-bar-label" style="color:#4a9e4a;">木</span>
+            <div class="mock-bar"><div class="mock-bar-fill" style="width:80%;background:linear-gradient(90deg,#4a9e4a,#6bc96b);">5.0</div></div>
+          </div>
+          <div class="mock-bar-row">
+            <span class="mock-bar-label" style="color:#d44;">火</span>
+            <div class="mock-bar"><div class="mock-bar-fill" style="width:40%;background:linear-gradient(90deg,#d44,#ff6b6b);">2.0</div></div>
+          </div>
+          <div class="mock-bar-row">
+            <span class="mock-bar-label" style="color:#c9a84c;">土</span>
+            <div class="mock-bar"><div class="mock-bar-fill" style="width:20%;background:linear-gradient(90deg,#c9a84c,#e8c555);">1.0</div></div>
+          </div>
+          <div class="mock-bar-row">
+            <span class="mock-bar-label" style="color:#ccc;">金</span>
+            <div class="mock-bar"><div class="mock-bar-fill" style="width:10%;background:linear-gradient(90deg,#aaa,#ddd);">0.5</div></div>
+          </div>
+          <div class="mock-bar-row">
+            <span class="mock-bar-label" style="color:#4488cc;">水</span>
+            <div class="mock-bar"><div class="mock-bar-fill" style="width:20%;background:linear-gradient(90deg,#4488cc,#66aaee);">1.0</div></div>
+          </div>
+        </div>
+
+        <ul class="mock-list">
+          <li>基本鑑定の全内容</li>
+          <li>開運アドバイス（カラー・方角・フード）</li>
+          <li>大運（人生の10年周期）</li>
+          <li>年運（今後数年の運勢）</li>
+          <li>月運（12ヶ月の運勢）</li>
+          <li>日運（今週の日別運勢）</li>
+          <li>通変星・十二運の解説</li>
+          <li>五行バランス＆エネルギータイプ</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="plan-cta-area reveal">
+      <p class="plan-cta-text">まずは無料で、あなたの五行タイプを知る。</p>
+      <p class="plan-cta-sub">有料プランは鑑定結果画面からいつでもアップグレードできます。</p>
+      <a href="https://stunning-cocada-1d0598.netlify.app/" class="cta-btn">無料で鑑定する</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== METHODOLOGY ===== -->
+<section class="methodology">
+  <div class="container" style="position:relative; z-index:2; padding-top:60px;">
+    <div class="reveal">
+      <p class="method-label">Methodology</p>
+      <h2 class="method-title">なぜ精度が違うのか</h2>
+      <p class="method-desc">
+        一般的な四柱推命は、生年月日から命式を出して終わりです。<br>
+        五行期数推命は、そこに3つの独自計算を加えます。
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <div class="step-card">
+          <h3 class="step-title">命式を数値化する</h3>
+          <p class="step-body">
+            生年月日と出生時間から導いた十干・干支の五行属性を、数値に変換します。
+            感覚ではなく、根拠のある数字として命式を読み解きます。
+          </p>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <div class="step-card">
+          <h3 class="step-title">大運の転換点を月単位で特定する</h3>
+          <p class="step-body">
+            万年暦の「期」変化日数を算出し、3で割ることで大運の転換タイミングを月単位まで絞り込みます。
+            10年周期に加え、あなた固有の転換点を正確に割り出します。
+          </p>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <div class="step-card">
+          <h3 class="step-title">陰陽×性別で運の向きを決定する</h3>
+          <p class="step-body">
+            生まれた日の十干から陰陽を判断し、性別と組み合わせて順行運・逆行運を導出します。
+            同じ生年月日でも、あなただけの運気の流れが存在します。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="faq">
+  <div class="container" style="position:relative; z-index:2; padding-top:60px;">
+    <div class="reveal">
+      <p class="faq-label">FAQ</p>
+      <h2 class="faq-title">よくある質問</h2>
+    </div>
+
+    <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+      <div class="faq-q">
+        <span>出生時間がわからない場合は？</span>
+        <span class="faq-toggle">+</span>
+      </div>
+      <div class="faq-a">
+        「不明」を選択して鑑定できます。出生時間がない場合は時柱を除いた三柱での鑑定になりますが、基本性格や大運の流れは十分に読み取れます。
+      </div>
+    </div>
+
+    <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+      <div class="faq-q">
+        <span>MBTIとは何が違うの？</span>
+        <span class="faq-toggle">+</span>
+      </div>
+      <div class="faq-a">
+        MBTIは質問への回答から「今の性格タイプ」を分類します。五行期数推命は生年月日の天文データから「生まれ持った命式」と「運気の時間的な流れ」を読み解きます。性格だけでなく、いつが飛躍期で、いつが充電期かまでわかるのが最大の違いです。
+      </div>
+    </div>
+
+    <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+      <div class="faq-q">
+        <span>生年月日が同じ人と結果は同じ？</span>
+        <span class="faq-toggle">+</span>
+      </div>
+      <div class="faq-a">
+        出生時間・出生地の経度・性別によって結果が変わります。同じ生年月日でも、出生時間が違えば時柱が異なり、性別が違えば順行運・逆行運が変わるため、あなた固有の鑑定結果になります。
+      </div>
+    </div>
+
+    <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+      <div class="faq-q">
+        <span>四柱推命の知識がなくても大丈夫？</span>
+        <span class="faq-toggle">+</span>
+      </div>
+      <div class="faq-a">
+        まったく問題ありません。専門用語を使わず、あなたのタイプ名・性格特性・運気の流れをわかりやすい言葉でお伝えします。四柱推命を知らなくても楽しめるよう設計されています。
+      </div>
+    </div>
+
+    <div class="faq-item reveal" onclick="this.classList.toggle('open')">
+      <div class="faq-q">
+        <span>科学的根拠はある？</span>
+        <span class="faq-toggle">+</span>
+      </div>
+      <div class="faq-a">
+        五行期数推命は、古代中国の陰陽五行説をベースに、万年暦のデータと独自の数値化計算を体系化した命式分析法です。西洋科学の実証研究とは異なるアプローチですが、数千年の蓄積と統計的な裏付けに基づいています。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="final-cta noise-bg">
+  <div class="floating-kanji" style="top:10%;left:8%;font-size:80px;animation-delay:0s;">木</div>
+  <div class="floating-kanji" style="top:20%;right:12%;font-size:60px;animation-delay:2s;">火</div>
+  <div class="floating-kanji" style="bottom:15%;left:15%;font-size:70px;animation-delay:4s;">水</div>
+  <div class="floating-kanji" style="bottom:25%;right:8%;font-size:50px;animation-delay:1s;">金</div>
+  <div class="floating-kanji" style="top:50%;left:50%;font-size:100px;animation-delay:3s;transform:translateX(-50%);">土</div>
+
+  <div class="container" style="position:relative; z-index:2;">
+    <h2 class="final-cta-title reveal">
+      あなたの五行タイプは、<br>何ですか？
+    </h2>
+    <p class="final-cta-sub reveal">
+      会員登録不要。生年月日を入れるだけ。
+    </p>
+    <div class="reveal">
+      <a href="https://stunning-cocada-1d0598.netlify.app/" class="cta-btn">
+        無料で鑑定する
+      </a>
+      <p class="hero-note" style="margin-top:20px;">基本鑑定は無料。詳細鑑定は有料オプションです。</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p class="footer-logo">五 行 期 数 推 命</p>
+  <div class="footer-links">
+    <a href="#">特定商取引法に基づく表記</a>
+    <a href="#">プライバシーポリシー</a>
+  </div>
+  <p class="footer-copy">&copy; 2026 Gogyo Kisuu Suimei. All rights reserved.</p>
+</footer>
+
+<!-- ===== SCRIPTS ===== -->
+<script>
+// Loading screen
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loading').classList.add('hidden');
+  }, 1500);
+});
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const scrollTop = document.documentElement.scrollTop;
+  const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  const progress = (scrollTop / scrollHeight) * 100;
+  document.getElementById('progressBar').style.width = progress + '%';
+});
+
+// Scroll reveal with stagger
+document.addEventListener('DOMContentLoaded', () => {
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, i * 100);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+  reveals.forEach(el => observer.observe(el));
+});
+
+// Hero Canvas Particles
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let w, h;
+
+  function resize() {
+    const hero = canvas.parentElement;
+    w = canvas.width = hero.offsetWidth;
+    h = canvas.height = hero.offsetHeight;
+  }
+
+  function createParticles() {
+    particles = [];
+    const count = Math.min(Math.floor(w * h / 8000), 80);
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.4 + 0.1,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const time = Date.now() * 0.001;
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = w;
+      if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h;
+      if (p.y > h) p.y = 0;
+      const a = p.alpha * (0.5 + 0.5 * Math.sin(time + p.phase));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(201, 168, 76, ${a})`;
+      ctx.fill();
+    });
+    // Connect nearby particles
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(201, 168, 76, ${0.03 * (1 - dist / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  createParticles();
+  draw();
+  window.addEventListener('resize', () => { resize(); createParticles(); });
+})();
+</script>
+
+</body>
+</html>
